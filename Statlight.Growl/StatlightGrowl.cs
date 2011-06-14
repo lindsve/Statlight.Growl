@@ -1,5 +1,6 @@
 ﻿using System;
 using Growl.Connector;
+using Growl.CoreLibrary;
 using StatLight.Client.Harness.Events;
 using StatLight.Core.Events;
 using StatLight.Core.Events.Aggregation;
@@ -22,8 +23,9 @@ namespace Statlight.Growl
             _growl = new GrowlConnector();
 
             var application = new Application("Statlight");
-            var testCompleteWithFailedTests = new NotificationType(MessageTestsFailed, "Statlight");
-            var testCompleteWithOnlySuccessfulTests = new NotificationType(MessageTestsSucceeded, "Statlight");
+
+            var testCompleteWithFailedTests = new NotificationType(MessageTestsFailed, "Statlight", Properties.Resources.circleFAIL, true);
+            var testCompleteWithOnlySuccessfulTests = new NotificationType(MessageTestsSucceeded, "Statlight", Properties.Resources.circleWIN, true);
             _growl.Register(application, new[] { testCompleteWithFailedTests, testCompleteWithOnlySuccessfulTests});
         }
 

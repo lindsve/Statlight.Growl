@@ -36,6 +36,7 @@
     <Reference Include="StatLight.Core, Version=1.4.4147.33851, Culture=neutral, PublicKeyToken=9f7f221db79a30d0, processorArchitecture=x86" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Drawing" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -44,12 +45,24 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
     <Compile Include="StatlightGrowl.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="lib\Growl.Connector.dll" />
     <Content Include="lib\Growl.CoreLibrary.dll" />
     <Content Include="lib\StatLight.Core.dll" />
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Include="resources\circleFAIL.png" />
+    <EmbeddedResource Include="resources\circleWAIL.png" />
+    <EmbeddedResource Include="resources\circleWIN.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
