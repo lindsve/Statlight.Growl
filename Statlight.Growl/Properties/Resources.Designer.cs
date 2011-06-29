@@ -80,5 +80,12 @@ namespace Statlight.Growl.Properties {
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
+        
+        internal static System.Drawing.Bitmap StatlightIcon {
+            get {
+                object obj = ResourceManager.GetObject("StatlightIcon", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
     }
 }
