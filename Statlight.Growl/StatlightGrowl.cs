@@ -9,15 +9,15 @@ namespace Statlight.Growl
 {
     public class StatlightGrowl : ITestingReportEvents, IListener<TestRunCompletedServerEvent>
     {
-        private GrowlConnector _growl;
-        private int _totalNoOfTests = 0;
-        private int _noOfFailedTests = 0;
-        private int _noOfIgnoredTests = 0;
-        private int _noOfPassedTests = 0;
+        private readonly GrowlConnector _growl;
+        private int _totalNoOfTests;
+        private int _noOfFailedTests;
+        private int _noOfIgnoredTests;
+        private int _noOfPassedTests;
 
         private const string AppName = "Statlight";
-        private const string MessageTestsFailed = "FAILED";
-        private const string MessageTestsSucceeded = "SUCCEEDED";
+        private const string FailureTitle = "FAILED";
+        private const string SuccessTitle = "SUCCEEDED";
         private const string GeneralMessage = "STATLIGHT";
 
         public StatlightGrowl()
@@ -25,24 +25,25 @@ namespace Statlight.Growl
             _growl = new GrowlConnector();
 
             var application = new Application("Statlight");
-
-            var testCompleteWithFailedTests = new NotificationType(MessageTestsFailed, "Statlight", Properties.Resources.circleFAIL, true);
-            var testCompleteWithOnlySuccessfulTests = new NotificationType(MessageTestsSucceeded, "Statlight", Properties.Resources.circleWIN, true);
+            var testCompleteWithFailedTests = new NotificationType(FailureTitle, "Statlight", Properties.Resources.circleFAIL, true);
+            var testCompleteWithOnlySuccessfulTests = new NotificationType(SuccessTitle, "Statlight", Properties.Resources.circleWIN, true);
             var generalNotification = new NotificationType(GeneralMessage, "Statlight", Properties.Resources.StatlightIcon, true);
 
             _growl.Register(application, new[] { testCompleteWithFailedTests, testCompleteWithOnlySuccessfulTests, generalNotification});
         }
 
-        public void Handle(TestCaseResult message)
+        public void Handle(TestCaseResult testCase)
         {
             if (_totalNoOfTests == 0)
                 NotifyTestRunStarted();
             _totalNoOfTests++;
-            
-            switch (message.ResultType)
+
+            switch (testCase.ResultType)
             {
                 case ResultType.Failed:
                     _noOfFailedTests++;
+                    if(_noOfFailedTests == 1)
+                        NotifyCurrentStatus(testCase);
                     break;
                 case ResultType.Ignored:
                     _noOfIgnoredTests++;
@@ -52,13 +53,7 @@ namespace Statlight.Growl
                     break;
             }
         }
-
-        private void NotifyTestRunStarted()
-        {
-            var notification = new Notification(AppName, GeneralMessage, null, AppName, "Test run started", null, false, Priority.Moderate, null);
-            _growl.Notify(notification);
-        }
-
+        
         public void Handle(TraceClientEvent message) { }
 
         public void Handle(BrowserHostCommunicationTimeoutServerEvent message) { }
@@ -77,13 +72,69 @@ namespace Statlight.Growl
         
         public void Handle(TestRunCompletedServerEvent message)
         {
-            var notificationMessage = _noOfFailedTests > 0 ? MessageTestsFailed : MessageTestsSucceeded;
+            NotifyFinalStatus();
+            ResetTestsCounts();
+        }
 
-            var summary = string.Format("Test run finished. {0} passed, {1} failed, {2} ignored", _noOfPassedTests, _noOfFailedTests, _noOfIgnoredTests);
-
-            var notification = new Notification(AppName, notificationMessage, null, AppName, summary, null, false, Priority.Moderate, null);
+        private void NotifyTestRunStarted()
+        {
+            var notification = new Notification(AppName, GeneralMessage, null, AppName, "Test run started", null, false, Priority.Moderate, null);
             _growl.Notify(notification);
+        }
 
+        private void NotifyCurrentStatus(TestCaseResult testCase)
+        {
+            var summary = GetTestCaseSummary(testCase);
+            NotifyStatus(summary);
+        }
+
+        private void NotifyFinalStatus()
+        {
+            var summary = GetFinalSummary();
+            NotifyStatus(summary);
+        }
+
+        private void NotifyStatus(string summary)
+        {
+            var notification = GetNotification(summary);
+            _growl.Notify(notification);
+        }
+
+        private Notification GetNotification(string summary)
+        {
+            var notificationMessage = GetNotificationTitle();
+            var priority = GetNotificationPriorityLevel();
+            var notification = new Notification(AppName, notificationMessage, null, AppName, summary, null, false, priority,null);
+            return notification;
+        }
+
+        private string GetFinalSummary()
+        {
+            return string.Format("Test run finished. {0} passed, {1} failed, {2} ignored", _noOfPassedTests, _noOfFailedTests, _noOfIgnoredTests);
+        }
+
+        private string GetTestCaseSummary(TestCaseResult testCase)
+        {
+            return string.Format("At least 1 test failed!. {0} - {1}",testCase.ClassName, testCase.MethodName);
+        }
+
+        private string GetNotificationTitle()
+        {
+            return _noOfFailedTests > 0 ? FailureTitle : SuccessTitle;
+        }
+
+        public Priority GetNotificationPriorityLevel()
+        {
+            Priority priority = Priority.Moderate;
+            if (_totalNoOfTests == 0 || (_noOfIgnoredTests == _totalNoOfTests)) return priority;
+            if (_noOfPassedTests > 0) Enum.TryParse(Properties.Resources.failpriority, true, out priority);
+            else Enum.TryParse(Properties.Resources.successpriority, true, out priority);
+            Console.WriteLine("DEBUG:{0}",priority);
+            return priority;
+        }
+
+        private void ResetTestsCounts()
+        {
             _totalNoOfTests = 0;
             _noOfPassedTests = 0;
             _noOfIgnoredTests = 0;
